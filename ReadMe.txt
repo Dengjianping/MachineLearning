@@ -1,1 +1,1 @@
-This repo is for recording my way to learn machine learning.
+This repo is for recording my way to learn machine learning. And code will be implemented by c++/python/CUDA.
