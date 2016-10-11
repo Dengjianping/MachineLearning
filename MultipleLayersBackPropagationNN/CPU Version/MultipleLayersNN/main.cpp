@@ -204,3 +204,37 @@ void updateNodes(double alpha, vector<double> & target, vector<vector<Node> > & 
 		}
 	}
 }
+
+void updateWeights(double alpha, vector<double> & target, vector<vector<Node> > & nodes)
+{
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        if (i == nodes.size() - 1)break;
+        for (int j = 0; j < nodes[i].size(); j++)
+        {
+            for (int m = 0; m < nodes[i][j].weights.size(); m++) // index of weights in single nodes
+            {
+                //nodes[i][j].value * 
+                static vector<double> tmp;
+                for (int n = i + 1; n < nodes.size(); n++) // 
+                {
+                    if (tmp.empty())
+                    {
+                        double t = nodes[i][j].value * nodes.[n][m].value * (1 - nodes[n][m].value);
+                        for (int p = 0; p < nodes[n][m].weights.size(); p++)
+                        {
+                            tmp.push_back(nodes[n][m].weights[p]*t);
+                        }
+                    }
+                    else
+                    {
+                        for (int q = 0; q < nodes[n].size(); q++)
+                        {
+                            tmp[q] * nodes[n][q].value * (1 - nodes[n][q])
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
