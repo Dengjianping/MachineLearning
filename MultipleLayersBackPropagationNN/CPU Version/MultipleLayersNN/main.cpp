@@ -230,7 +230,7 @@ void updateWeights(double alpha, vector<double> & target, vector<vector<Node> > 
                     {
                         for (int q = 0; q < nodes[n].size(); q++)
                         {
-                            tmp[q] * nodes[n][q].value * (1 - nodes[n][q])
+                            tmp[q] * nodes[n][q].value * (1 - nodes[n][q]);
                         }
                     }
                 }
