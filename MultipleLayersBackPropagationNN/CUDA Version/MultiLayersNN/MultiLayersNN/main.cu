@@ -32,11 +32,12 @@ public:
     double changeDerivationValue(double newValue) { derivationValue = newValue; };
     void updateValue(double newValue) { value = newValue; };
     vector<double> weightsOfNeuron() const { return this->weights; };
-    double sqrtError(double target, vector<double> & inputs);
-    double derivationOfError(double target, vector<double> & inputs);
-    double output(vector<double> & inputs);
-    double sigmoid(vector<double> & inputs);
-    double derivationOfSigmoid(vector<double> & inputs);
+    double sqrtError(double target);
+    double derivationOfError(double target);
+    // double output(vector<double> & inputs);
+    double sigmoid();
+    double derivationOfSigmoid();
+    double derivationOfTotalError(double target);
     ~Neuron();
 };
 
@@ -48,17 +49,17 @@ Neuron::Neuron(const int N)
     this->initWeghts();
 }
 
-double Neuron::sqrtError(double target, vector<double> & inputs)
+double Neuron::sqrtError(double target)
 {
-    return pow(target - output(inputs), 2);
+    return pow(target - value, 2);
 }
 
-double Neuron::derivationOfError(double target, vector<double> & inputs)
+double Neuron::derivationOfError(double target)
 {
-    return output(inputs) - target;
+    return value - target;
 }
 
-double Neuron::output(vector<double> & inputs)
+/* double Neuron::output(vector<double> & inputs)
 {
     double t = 0.0;
     for (size_t i = 0; i < weightsNum; i++)
@@ -66,23 +67,24 @@ double Neuron::output(vector<double> & inputs)
         t += weights[i] * inputs[i];
     }
     return t;
+} */
+
+
+double Neuron::sigmoid()
+{
+    return 1 / (1 + exp(-this-value));
 }
 
-
-double Neuron::sigmoid(vector<double> & inputs)
+double Neuron::derivationOfSigmoid()
 {
-    double t = 0.0;
-    for (size_t i = 0; i < weightsNum; i++)
-    {
-        t += weights[i] * inputs[i];
-    }
-    return 1 / (1 + exp(-t));
-}
-
-double Neuron::derivationOfSigmoid(vector<double> & inputs)
-{
-    double t = this->sigmoid(inputs);
+    double t = this->sigmoid();
     return t*(1 - t);
+}
+
+double Neuron::derivationOfTotalError(double target)
+{
+    derivationValue = this->derivationOfError * this->derivationOfSigmoid()
+    return derivationValue;
 }
 
 Neuron::~Neuron()
@@ -125,6 +127,7 @@ private:
 public:
     NeuronNetwork(vector<double> & inputs, const int weightsNum, vector<int> & nodesNum, const int layersNum, vector<double> & targets);
     void forward();
+    void backward();
     void updateDerivationOfNode();
     double updateWeight(int whichLayer, int whichNode, int indexOfWeights);
     void train();
@@ -177,12 +180,29 @@ void NeuronNetwork::updateDerivationOfNode()
     // update output layer first
     for (size_t i = 0; i < layers[layersNumber - 1].nodesOfLayer(); i++)
     {
-        layers[layersNumber - 1].layerOfNeuron()[i]
+        double t = 0.0;
+        t = (layers[layersNumber - 1].layerOfNeuron()[i].derivationOfTotalError(targets[i]) * layers[layersNumber - 1].layerOfNeuron()[i].derivationOfSigmoid();
+        layers[layersNumber - 1].layerOfNeuron()[i].changeDerivationValue(t);
+    }
+    // update hidden layers
+    for (size_t i = layersNumber - 2; i >= 0; i--)
+    {
+        for (size_t j = 0; j < layers[i].nodesOfLayer(); i++)
+        {
+            //layers[i].layerOfNeuron()[j]
+            double t = 0.0;
+            for (size_t k = 0; k < layers[i + 1].layerOfNeuron().size(); k++)
+            {
+                t += layers[i + 1].layerOfNeuron()[k].getDerivationValue() * layers[i + 1].layerOfNeuron()[k].weightsOfNeuron()[j];
+            }
+            layers[i].layerOfNeuron()[j].changeDerivationValue(t);
+        }
     }
 }
 
 double NeuronNetwork::updateWeight(int whichLayer, int whichNode, int indexOfWeights)
 {
+    // update output layer firstly
     for (size_t i = whichLayer; i < layersNumber; i++)
     {
         for (size_t j = 0; j < layers[i].nodesOfLayer(); j++)
