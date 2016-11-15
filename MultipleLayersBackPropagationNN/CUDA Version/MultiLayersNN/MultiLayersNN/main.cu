@@ -207,7 +207,21 @@ double NeuronNetwork::updateWeight()
     // update hidden layers weights
     for (size_t i = layersNumber - 2; i >= 0; i--)
     {
-
+        if (i > 0)
+        {
+            for (size_t j = 0; j < layers[i].nodesOfLayer(); j++)
+            {
+                for (size_t k = 0; k < layers[i].layerOfNeuron()[j].weightsOfNeuron().size(); k++)
+                {
+                    
+                }
+            }
+        }
+        // the first hidden layer
+        else
+        {
+            
+        }
     }
 }
 
