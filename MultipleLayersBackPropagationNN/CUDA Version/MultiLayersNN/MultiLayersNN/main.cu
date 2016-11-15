@@ -31,6 +31,7 @@ public:
     double getDerivationValue() const { return derivationValue; };
     void changeDerivationValue(double target);
     void updateValue(double newValue) { value = newValue; };
+    void updateWeight(int index, int newValue) { weights[index] = newValue; };
     vector<double> weightsOfNeuron() const { return this->weights; };
     double sqrtError(double target);
     double derivationOfError(double target);
@@ -76,7 +77,7 @@ double Neuron::derivationOfSigmoid()
 
 double Neuron::derivationOfTotalError(double target)
 {
-    double t = this->derivationOfError * this->derivationOfSigmoid();
+    double t = derivationOfError(target) * derivationOfSigmoid();
     return t;
 }
 
@@ -121,8 +122,9 @@ public:
     NeuronNetwork(vector<double> & inputs, const int weightsNum, vector<int> & nodesNum, const int layersNum, vector<double> & targets);
     void forward();
     void backward();
+    bool isConvergent();
     void updateDerivationOfNode();
-    double updateWeight();
+    void updateWeights();
     void train();
     ~NeuronNetwork();
 };
@@ -168,6 +170,23 @@ void NeuronNetwork::forward()
     }
 }
 
+bool NeuronNetwork::isConvergent()
+{
+    double t = 0.0;
+    for (size_t i = 0; i < layers[layersNumber-1].nodesOfLayer(); i++)
+    {
+        t += layers[layersNumber - 1].layerOfNeuron()[i].sqrtError(targets[i]);
+    }
+    if (t <= errorPrecision)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void NeuronNetwork::updateDerivationOfNode()
 {
     // update output layer first
@@ -193,7 +212,7 @@ void NeuronNetwork::updateDerivationOfNode()
     }
 }
 
-double NeuronNetwork::updateWeight()
+void NeuronNetwork::updateWeights()
 {
     // update output layer firstly
     for (size_t i = 0; i < layers[layersNumber-1].nodesOfLayer(); i++)
@@ -202,6 +221,7 @@ double NeuronNetwork::updateWeight()
         {
             double t = layers[layersNumber - 1].layerOfNeuron()[i].derivationOfTotalError(targets[i])*layers[layersNumber - 2].layerOfNeuron()[j].valueOfNeuron();
             t = layers[layersNumber - 1].layerOfNeuron()[i].weightsOfNeuron()[j] - learningRate*t;
+            layers[layersNumber - 1].layerOfNeuron()[i].updateWeight(j, t);
         }
     }
     // update hidden layers weights
@@ -213,14 +233,41 @@ double NeuronNetwork::updateWeight()
             {
                 for (size_t k = 0; k < layers[i].layerOfNeuron()[j].weightsOfNeuron().size(); k++)
                 {
-                    
+                    double t = layers[i].layerOfNeuron()[j].getDerivationValue()*layers[i].layerOfNeuron()[j].sigmoid()*layers[i - 1].layerOfNeuron()[k].valueOfNeuron();
+                    t = layers[i].layerOfNeuron()[j].weightsOfNeuron()[k] - learningRate*t;
+                    layers[i].layerOfNeuron()[j].updateWeight(k, t);
                 }
             }
         }
         // the first hidden layer
         else
         {
-            
+            for (size_t j = 0; j < layers[0].nodesOfLayer(); j++)
+            {
+                for (size_t k = 0; k < layers[0].layerOfNeuron()[j].weightsOfNeuron().size(); k++)
+                {
+                    double t = layers[0].layerOfNeuron()[j].getDerivationValue()*layers[0].layerOfNeuron()[j].sigmoid()*inputs[k];
+                    t = layers[i].layerOfNeuron()[j].weightsOfNeuron()[k] - learningRate*t;
+                    layers[i].layerOfNeuron()[j].updateWeight(k, t);
+                }
+            }
+        }
+    }
+}
+
+void NeuronNetwork::train()
+{
+    while (true)
+    {
+        forward();
+        if (isConvergent())
+        {
+            break;
+        }
+        else
+        {
+            updateDerivationOfNode();
+            updateWeights();
         }
     }
 }
