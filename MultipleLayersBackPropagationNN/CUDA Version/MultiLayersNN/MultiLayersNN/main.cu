@@ -6,6 +6,7 @@
 #include <cmath>
 #include <vector>
 #include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
@@ -20,8 +21,7 @@ private:
     {
         for (size_t i = 0; i < weightsNum; i++)
         {
-            // double t = rand() / RAND_MAX;
-            double t = rand() % 10;
+            double t = rand() / (double)RAND_MAX;      
             weights.push_back(t);
         }
     }
@@ -130,7 +130,7 @@ public:
 };
 
 double NeuronNetwork::learningRate = 0.3;
-double NeuronNetwork::errorPrecision = 1e-4;
+double NeuronNetwork::errorPrecision = 1e-2;
 
 NeuronNetwork::NeuronNetwork(vector<double> & inputs, const int weightsNum, vector<int> & nodesNum, const int layersNum, vector<double> & targets)
 {
@@ -280,6 +280,16 @@ int main()
     const int N = 3;
     Neuron n(N);
     cout << n.valueOfNeuron() << endl;
+
+    vector<double> inputs = { 1.0,2.0,3.0 };
+    int weightsNumber = 3;
+    vector<int> nodesNumber = { 3,3,3 };
+    int layersNumber = 4;
+    vector<double> targets = { 0.5,0.5,0.5 };
+
+    NeuronNetwork nn(inputs, weightsNumber, nodesNumber, layersNumber, targets);
+    nn.train();
+
     for (size_t i = 0; i < N; i++)
     {
         cout << n.weightsOfNeuron()[i] << endl;
