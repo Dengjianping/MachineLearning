@@ -21,7 +21,7 @@ private:
     {
         for (size_t i = 0; i < weightsNum; i++)
         {
-            double t = rand() / (double)RAND_MAX;      
+            double t = rand() / (double)RAND_MAX;
             weights.push_back(t);
         }
     }
@@ -132,9 +132,9 @@ public:
 double NeuronNetwork::learningRate = 0.3;
 double NeuronNetwork::errorPrecision = 1e-2;
 
-NeuronNetwork::NeuronNetwork(vector<double> & inputs, vector<int> & weightSet, vector<int> & nodesNum, const int layersNum, vector<double> & targets)
+NeuronNetwork::NeuronNetwork(vector<double> & inputs, vector<int> & weightSet, vector<int> & nodesNum, const int layersNum, vector<double> & expected)
 {
-    inputs = inputs; targets = targets; layersNumber = layersNum;
+    inputs = inputs; targets = expected; layersNumber = layersNum;
     for (size_t i = 0; i < layersNumber; i++)
     {
         NeuronLayer layer(nodesNum[i], weightSet[i]);
@@ -173,7 +173,7 @@ void NeuronNetwork::forward()
 bool NeuronNetwork::isConvergent()
 {
     double t = 0.0;
-    for (size_t i = 0; i < layers[layersNumber-1].nodesOfLayer(); i++)
+    for (size_t i = 0; i < layers[layersNumber - 1].nodesOfLayer(); i++)
     {
         t += layers[layersNumber - 1].layerOfNeuron()[i].sqrtError(targets[i]);
     }
@@ -197,9 +197,9 @@ void NeuronNetwork::updateDerivationOfNode()
         layers[layersNumber - 1].layerOfNeuron()[i].changeDerivationValue(t);
     }
     // update hidden layers
-    for (size_t i = layersNumber - 2; i >= 0; i--)
+    for (size_t i = layersNumber - 2; i > 0; i--)
     {
-        for (size_t j = 0; j < layers[i].nodesOfLayer(); i++)
+        for (size_t j = 0; j < layers[i].nodesOfLayer(); j++)
         {
             //layers[i].layerOfNeuron()[j]
             double t = 0.0;
@@ -215,7 +215,7 @@ void NeuronNetwork::updateDerivationOfNode()
 void NeuronNetwork::updateWeights()
 {
     // update output layer firstly
-    for (size_t i = 0; i < layers[layersNumber-1].nodesOfLayer(); i++)
+    for (size_t i = 0; i < layers[layersNumber - 1].nodesOfLayer(); i++)
     {
         for (size_t j = 0; j < layers[layersNumber - 1].layerOfNeuron()[i].weightsOfNeuron().size(); j++)
         {
@@ -225,7 +225,7 @@ void NeuronNetwork::updateWeights()
         }
     }
     // update hidden layers weights
-    for (size_t i = layersNumber - 2; i >= 0; i--)
+    for (size_t i = layersNumber - 2; i > 0; i--)
     {
         if (i > 0)
         {
@@ -257,8 +257,10 @@ void NeuronNetwork::updateWeights()
 
 void NeuronNetwork::train()
 {
+    int i = 0;
     while (true)
     {
+        i++;
         forward();
         if (isConvergent())
         {
@@ -268,6 +270,7 @@ void NeuronNetwork::train()
         {
             updateDerivationOfNode();
             updateWeights();
+            cout << "iteration: " << i << layers[layersNumber - 1].layerOfNeuron()[0].valueOfNeuron() << ", " << layers[layersNumber - 1].layerOfNeuron()[1].valueOfNeuron() << endl;
         }
     }
 }
@@ -285,10 +288,10 @@ int main()
     int weightsNumber = 3;
     vector<int> weightsSet = { 0,3,4,3 };
     vector<int> nodesNumber = { 3,4,3,2 };
-    int layersNumber = 4;
-    vector<double> targets = { 0.5,0.5 };
+    int layersNum = 4;
+    vector<double> expected = { 0.5,0.5 };
 
-    NeuronNetwork nn(inputs, weightsSet, nodesNumber, layersNumber, targets);
+    NeuronNetwork nn(inputs, weightsSet, nodesNumber, layersNum, expected);
     nn.train();
 
     for (size_t i = 0; i < N; i++)
