@@ -19,6 +19,7 @@ private:
         for (size_t i = 0; i < weightsNum; i++)
         {
             double t = rand() / (double)RAND_MAX;
+            cout << t << endl;
             weights.push_back(t);
         }
     }
@@ -28,11 +29,11 @@ public:
     double getDerivationValue() const { return derivationValue; };
     void changeDerivationValue(double newValue);
     void updateValue(double newValue) { value = newValue; };
-    void updateWeight(int index, int newValue) { weights[index] = newValue; };
+    void updateWeight(int index, double newValue) { weights[index] = newValue; };
     vector<double> weightsOfNeuron() const { return this->weights; };
     double sqrtError(double target);
     double derivationOfError(double target);
-    double sigmoid();
+    double sigmoid(double input);
     double derivationOfSigmoid();
     double derivationOfTotalError(double target);
     ~Neuron();
@@ -53,23 +54,24 @@ void Neuron::changeDerivationValue(double newValue)
 
 double Neuron::sqrtError(double target)
 {
-    return pow(target - sigmoid(), 2);
+    return pow(target - value, 2);
 }
 
 double Neuron::derivationOfError(double target)
 {
-    return sigmoid() - target;
+    return value - target;
 }
 
-double Neuron::sigmoid()
+double Neuron::sigmoid(double input)
 {
-    return 1 / (1 + exp(-this->value));
+    value = 1 / (1 + exp(-input));
+    cout << "in class: " << value << endl;
+    return value;
 }
 
 double Neuron::derivationOfSigmoid()
 {
-    double t = this->sigmoid();
-    return t*(1 - t);
+    return value * (1 - value);
 }
 
 double Neuron::derivationOfTotalError(double target)
@@ -117,11 +119,12 @@ private:
     static double errorPrecision;
 public:
     NeuronNetwork(vector<double> & inputs, vector<int> & weightSet, vector<int> & nodesNum, const int layersNum, vector<double> & targets);
+    vector<NeuronLayer> getLayers() const { return layers; };
     void forward();
     void backward();
     bool isConvergent();
     void updateDerivationOfNode();
-    void updateWeights();
+    //void updateWeights();
     void train();
     ~NeuronNetwork();
 };
@@ -159,9 +162,19 @@ void NeuronNetwork::forward()
             double t = 0.0;
             for (size_t k = 0; k < layers[i].layerOfNeuron()[j].weightsOfNeuron().size(); k++)
             {
-                t += layers[i].layerOfNeuron()[j].weightsOfNeuron()[k] * layers[i - 1].layerOfNeuron()[k].valueOfNeuron();
+                if (i == 1)
+                {
+                    t += layers[i].layerOfNeuron()[j].weightsOfNeuron()[k] * targets[k];
+                }
+                else
+                {
+                    //cout << "last node value: " << layers[i - 1].layerOfNeuron()[k].valueOfNeuron() << endl;
+                    t += layers[i].layerOfNeuron()[j].weightsOfNeuron()[k] * layers[i - 1].layerOfNeuron()[k].valueOfNeuron();
+                }
             }
-            layers[i].layerOfNeuron()[j].updateValue(t);
+            //cout << t << endl;
+            layers[i].layerOfNeuron()[j].sigmoid(t);
+            cout << "value: " << layers[i].layerOfNeuron()[j].valueOfNeuron() << endl;
         }
     }
 }
@@ -208,7 +221,7 @@ void NeuronNetwork::updateDerivationOfNode()
     }
 }
 
-void NeuronNetwork::updateWeights()
+/*void NeuronNetwork::updateWeights()
 {
     // update output layer firstly
     for (size_t i = 0; i < layers[layersNumber - 1].nodesOfLayer(); i++)
@@ -249,12 +262,14 @@ void NeuronNetwork::updateWeights()
             }
         }
     }
-}
+}*/
 
 void NeuronNetwork::train()
 {
     int i = 0;
-    while (true)
+    forward();
+    cout << "iteration: " << i << ", " << layers[layersNumber - 1].layerOfNeuron()[0].valueOfNeuron() << ", " << layers[layersNumber - 1].layerOfNeuron()[1].valueOfNeuron() << endl;
+    while (false)
     {
         i++;
         forward();
@@ -265,8 +280,8 @@ void NeuronNetwork::train()
         else
         {
             updateDerivationOfNode();
-            updateWeights();
-            cout << "iteration: " << i << layers[layersNumber - 1].layerOfNeuron()[0].sigmoid() << ", " << layers[layersNumber - 1].layerOfNeuron()[1].sigmoid() << endl;
+            //updateWeights();
+            cout << "iteration: " << i << layers[layersNumber - 1].layerOfNeuron()[0].valueOfNeuron() << ", " << layers[layersNumber - 1].layerOfNeuron()[1].valueOfNeuron() << endl;
         }
     }
 }
@@ -278,7 +293,7 @@ int main()
 {
     const int N = 3;
     Neuron n(N);
-    cout << n.valueOfNeuron() << endl;
+    srand((unsigned)time(NULL));
 
     vector<double> inputs = { 1.0,2.0,3.0 };
     int weightsNumber = 3;
@@ -288,12 +303,8 @@ int main()
     vector<double> expected = { 0.3,0.8 };
 
     NeuronNetwork nn(inputs, weightsSet, nodesNumber, layersNum, expected);
-    nn.train();
+    nn.train(); 
 
-    for (size_t i = 0; i < N; i++)
-    {
-        cout << n.weightsOfNeuron()[i] << endl;
-    }
     system("pause");
     return 0;
 }
