@@ -117,8 +117,41 @@ template <class T>
 class NeuronNetwork
 {
 private:
-    device_vector<NeuronLayer> network;
+    device_vector<NeuronLayer<T> > network;
+    device_vector<T> targets;
+    int hiddenLayerNumber;
 public:
-    NeuronNetwork();
+    NeuronNetwork(host_vector<T> inputs, host_vector<T> hiddenLayerWeightsSet, host_vector<T> hiddenLayerSet, int outputNeuronNumber, int outputWeightsSet, host_vector<T> targets);
+    __host__ __device__ void forward();
+    __host__ __device__ void backward)();
+    __host__ __device__ bool isConvergenced();
+    __host__ __device__ void showWeights() const;
     ~NeuronNetwork();
+};
+
+template <class T>
+NeuronNetwork<T>::NeuronNetwork(host_vector<T> inputs, host_vector<T> hiddenLayerWeightsSet, host_vector<T> hiddenLayerSet, int outputNeuronNumber, int outputWeightsSet, host_vector<T> expected)
+{
+    // construct input layer
+    NeuronLayer<T> inputLayer(inputs);
+    network.push_back(inputLayer);
+    
+    // construct hidden layers and output layer
+    hiddenLayerNumber = hiddenLayerWeightsSet.size();
+    for (size_t i = 0; i < hiddenLayerWeightsSet.size(); i++)
+    {
+        NeuronLayer hiddenLayer(hiddenLayerSet[i], hiddenLayerWeightsSet[i]);
+        network.push_back(hiddenLayer);
+    }
+    
+    // construct output layer
+    NeuronLayer hiddenLayer(outputNeuronNumber, outputWeightsSet);
+    
+    targets = expected;
+}
+
+template <class T>
+__host__ __device__ void NeuronNetwork<T>::forward()
+{
+    
 }
