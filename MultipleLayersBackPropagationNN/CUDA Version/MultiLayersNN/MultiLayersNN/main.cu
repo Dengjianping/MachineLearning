@@ -127,6 +127,7 @@ public:
     void updateDerivationOfNode();
     void updateWeights();
     void train();
+    void showWeights() const
     ~NeuronNetwork();
 };
 
@@ -278,6 +279,21 @@ void NeuronNetwork::train()
             updateDerivationOfNode();
             updateWeights();
             cout << "iteration: " << i << ", " << layers[layersNumber - 1].layerOfNeuron()[0].valueOfNeuron() << ", " << layers[layersNumber - 1].layerOfNeuron()[1].valueOfNeuron() << endl;
+        }
+    }
+}
+
+void NeuronNetwork::showWeights() const
+{
+    for (size_t i = 0; i < layersNumber; i++)
+    {
+        for (size_t j = 0; j < layers[i].nodes; j++)
+        {
+            cout << "node[" << i << "]" << "[" << j << "]" << ": " << layers[i].layer[j].value << endl;
+            for (size_t k = 0; k < layers[i].layer[j].weights.size(); k++)
+            {
+                cout << layers[i].layer[j].weights[k] << endl;
+            }
         }
     }
 }
