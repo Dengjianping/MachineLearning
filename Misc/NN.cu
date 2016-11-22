@@ -14,9 +14,10 @@ using namespace std;
 template <class T>
 class Neuron
 {
-private:
+public:
+    // member data
     __managed__ T value;
-    __managed__ T differentialTotalError;
+    __managed__ T differentialTotalErrorValue;
     device_vector<T> weights;
     void initialWeights(int weightsNumber)
     {
@@ -26,32 +27,35 @@ private:
             weights.push_back(t);
         }
     }
-public:
+    // member functions
     Neuron();
-    Neuron(const host_vector<T> & w);
-    __host__ __device__ T sigmoid();
+    Neuron(int weightsNumber);
+    __host__ __device__ T sigmoid(T input);
     __host__ __device__ T differentialSigmoid();
     __host__ __device__ T totalError(T target);
+    __host__ __device__ T differentialTotalError(T target) { return value - target; };
     __host__ __device__ void changeValue(T newValue);
     __host__ __device__ void changeSingleWeight(int index, T newValue);
-    ~Neuron();
+    __host__ __device__ int weightsCount() const { return weights.size(); };
+    __host__ __device__ T valueOfNeuron() const { return value; };
+    ~Neuron() {};
 };
 
 Neuron：：Neuron()
 {
-    value = totalError = 0;
+    value = differentialTotalErrorValue = 0;
     initialWeights(0);
 }
 
 Neuron::Neuron(int weightsNumber)
 {
-    value = totalError = 0;
+    value = differentialTotalErrorValue = 0;
     initialWeights(weightsNumber);
 }
 
-__host__ __device__ T Neuron<T>::sigmoid()
+__host__ __device__ T Neuron<T>::sigmoid(T input)
 {
-    value = 1 / (1 + exp(-value))
+    value = 1 / (1 + exp(-input))
     return value;
 }
 
@@ -84,12 +88,15 @@ __host__ __device__ void Neuron<T>::changeSingleWeight(int index, T newValue)
 template <class T>
 class NeuronLayer
 {
-private:
-    device_vector<Neuron<T> > layer;
 public:
+    // member data
+    device_vector<Neuron<T> > layer;
+    // member functions
     NeuronLayer(host_vector<T> & inputs); // for input layer
     NeuronLayer(int neuronNumber, int eachNeuronOfWeightsNumber); // for hidden layer and output layer
-    ~NeuronLayer();
+    T valueOfSingleNeuron(int index) const { return layer[index].valueOfNeuron(); };
+    __host__ __device__ void changeSingleNeuronValue(int index, T newValue);
+    ~NeuronLayer() {};
 };
 
 template <class T>
@@ -114,30 +121,40 @@ NeuronLayer<T>::NeuronLayer(int neuronNumber, int eachNeuronOfWeightsNumber)
 }
 
 template <class T>
+__host__ __device__ void NeuronLayer<T>::changeSingleNeuronValue(int index, T newValue)
+{
+    if (layer[index].valueOfNeuron() != newValue)
+    {
+        layer[index].changeValue(newValue);
+    }
+}
+
+template <class T>
 class NeuronNetwork
 {
 private:
-    device_vector<NeuronLayer<T> > network;
+    NeuronLayer<T> inputLayer;
+    device_vector<NeuronLayer<T> > hiddenLayers;
+    NeuronLayer<T> outputLayer;
     device_vector<T> targets;
-    int hiddenLayerNumber;
+    __constant__ double learningRate;
+    __constant__ double precision;
 public:
-    NeuronNetwork(host_vector<T> inputs, host_vector<T> hiddenLayerWeightsSet, host_vector<T> hiddenLayerSet, int outputNeuronNumber, int outputWeightsSet, host_vector<T> targets);
+    NeuronNetwork(host_vector<T> inputs, host_vector<T> hiddenLayerWeightsSet, host_vector<T> hiddenLayerSet, int outputNeuronNumber, int countOfWeights, host_vector<T> expected);
     __host__ __device__ void forward();
     __host__ __device__ void backward)();
     __host__ __device__ bool isConvergenced();
     __host__ __device__ void showWeights() const;
-    ~NeuronNetwork();
+    ~NeuronNetwork() {};
 };
 
 template <class T>
-NeuronNetwork<T>::NeuronNetwork(host_vector<T> inputs, host_vector<T> hiddenLayerWeightsSet, host_vector<T> hiddenLayerSet, int outputNeuronNumber, int outputWeightsSet, host_vector<T> expected)
+NeuronNetwork<T>::NeuronNetwork(host_vector<T> inputs, host_vector<T> hiddenLayerWeightsSet, host_vector<T> hiddenLayerSet, int outputNeuronNumber, int countOfWeights, host_vector<T> expected)
 {
     // construct input layer
-    NeuronLayer<T> inputLayer(inputs);
-    network.push_back(inputLayer);
+    inputLayer = NeuronLayer<T>(inputs);
     
     // construct hidden layers and output layer
-    hiddenLayerNumber = hiddenLayerWeightsSet.size();
     for (size_t i = 0; i < hiddenLayerWeightsSet.size(); i++)
     {
         NeuronLayer hiddenLayer(hiddenLayerSet[i], hiddenLayerWeightsSet[i]);
@@ -145,13 +162,64 @@ NeuronNetwork<T>::NeuronNetwork(host_vector<T> inputs, host_vector<T> hiddenLaye
     }
     
     // construct output layer
-    NeuronLayer hiddenLayer(outputNeuronNumber, outputWeightsSet);
+    outputLayer = NeuronLayer<T>(outputNeuronNumber, countOfWeights);
     
     targets = expected;
 }
 
+template<class T>
+__constant__ double NeuronNetwork<T>::learningRate = 0.3;
+
+template <class T>
+__constant__ double NeuronNetwork<T>::precision = 1e-4;
+
 template <class T>
 __host__ __device__ void NeuronNetwork<T>::forward()
 {
+    // handle hidden layers
+    for (size_t i = 0; i < hiddenLayers.size(); i++)
+    {
+        for (size_t j = 0; j < hiddenLayers[i].layer.size()(); j++)
+        {
+            T t = (T)0;
+            for (size_t k = 0; k < hiddenLayers[i].layer[j].weights.size(); k++)
+            {
+                if (i == 0)
+                {
+                    t += hiddenLayers[i].layer[j].weights[k] * inputLayer[k].value;
+                }
+                else
+                {
+                    t += hiddenLayers[i].layer[j].weights[k] * hiddenLayers[i-1].layer[k].value;
+                }
+            }
+            hiddenLayers[i].layer[j].sigmoid(t);
+        }
+    }
     
+    // handle output layer
+    for (size_t i = 0; i < outputLayer.size(); i++)
+    {
+        T t = (T)0;
+        for (size_t j = 0; j < outputLayer.weights.size(); j++)
+        {
+            t += outputLayer[i].weights[j] * hiddenLayers.back()[j].value;
+        }
+        outputLayer[i].sigmoid(t);
+    }
+}
+
+template <class T>
+__host__ __device__ void NeuronNetwork<T>::backward()
+{
+    // update output layer weights first
+    for (size_t i = 0; i < outputLayer.size(); i++)
+    {
+        T t = (T)0;
+        for (size_t j = 0; j < outputLayer.weights.size(); j++)
+        {
+            t += outputLayer[i].weights[j] * hiddenLayers.back()[j].value;
+        }
+        outputLayer[i].sigmoid(t);
+    }
 }
