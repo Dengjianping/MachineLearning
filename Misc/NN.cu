@@ -61,7 +61,7 @@ __host__ __device__ T Neuron<T>::sigmoid(T input)
 
 __host__ __device__ T Neuron<T>::differentialSigmoid()
 {
-    return value * (1-value);
+    return value * (1 - value);
 }
 
 __host__ __device__ T Neuron<T>::totalError(T target)
@@ -215,11 +215,39 @@ __host__ __device__ void NeuronNetwork<T>::backward()
     // update output layer weights first
     for (size_t i = 0; i < outputLayer.size(); i++)
     {
-        T t = (T)0;
+        outputLayer[i].differentialTotalErrorValue = outputLayer[i].differentialSigmoid() * outputLayer[i].differentialTotalError(targets[i]);
         for (size_t j = 0; j < outputLayer.weights.size(); j++)
         {
-            t += outputLayer[i].weights[j] * hiddenLayers.back()[j].value;
+            T t = outputLayer[i].differentialTotalErrorValue * hiddenLayers.back()[j].value;
+            outputLayer[i].weights[j] = outputLayer[i].weights[j] - learningRate * t;
         }
-        outputLayer[i].sigmoid(t);
     }
+    
+    // update hidden layers weights
+    for (size_t i = hiddenLayers.size() - 1; i >= 0; i--)
+    {
+        for (size_t j = 0; j < hiddenLayers[i].size(); j++)
+        {
+            if (i == hiddenLayers.size() - 1)
+            {
+                T t = (T)0;
+                for (size_t h = 0; h < outputLayer.size(); h++)
+                {
+                    t += outputLayer.differentialTotalErrorValue * hiddenLayers.back()[j].differentialSigmoid();
+                }
+                hiddenLayers.back()[j].differentialTotalErrorValue = t;
+                // update weight
+                
+            }
+            for (size_t k = 0; k < hiddenLayers[i].layer[j].weights.size(); k++)
+            {
+                
+            }
+        }
+    }
+}
+
+int main()
+{
+    
 }
