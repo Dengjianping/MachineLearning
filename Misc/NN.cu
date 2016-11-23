@@ -233,15 +233,30 @@ __host__ __device__ void NeuronNetwork<T>::backward()
                 T t = (T)0;
                 for (size_t h = 0; h < outputLayer.size(); h++)
                 {
-                    t += outputLayer.differentialTotalErrorValue * hiddenLayers.back()[j].differentialSigmoid();
+                    t += outputLayer[h].differentialTotalErrorValue * outputLayer[h].weight[j];
                 }
                 hiddenLayers.back()[j].differentialTotalErrorValue = t;
                 // update weight
-                
+                for (size_t m = 0; m < hiddenLayers[i].layer[j].weights.size(); m++)
+                {
+                    T t = hiddenLayers[i].layer[j].differentialTotalErrorValue * hiddenLayers[i].layer[j].differentialSigmoid() * hiddenLayers[i - 1].layer[m].value;
+                    hiddenLayers[i].layer[j].weights[m] = hiddenLayers[i].layer[j].weights[m] - learningRate * t;
+                }
             }
-            for (size_t k = 0; k < hiddenLayers[i].layer[j].weights.size(); k++)
+            else
             {
-                
+                T t = (T)0;
+                for (size_t h = 0; h < hiddenLayers[i + 1].size(); h++)
+                {
+                    t += hiddenLayers[i + 1].layer[h].differentialTotalErrorValue * hiddenLayers[i + 1].layer[h].weight[j];
+                }
+                hiddenLayers.back()[j].differentialTotalErrorValue = t;
+                // update weight
+                for (size_t m = 0; m < hiddenLayers[i].layer[j].weights.size(); m++)
+                {
+                    T t = hiddenLayers[i].layer[j].differentialTotalErrorValue * hiddenLayers[i].layer[j].differentialSigmoid() * hiddenLayers[i - 1].layer[m].value;
+                    hiddenLayers[i].layer[j].weights[m] = hiddenLayers[i].layer[j].weights[m] - learningRate * t;
+                }
             }
         }
     }
