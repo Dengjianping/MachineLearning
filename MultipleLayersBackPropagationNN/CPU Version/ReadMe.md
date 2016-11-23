@@ -9,4 +9,4 @@ Tested on Visual Stuido 2015 Community Version
 2. For this example, the neuron network has 4 layers, 2 layers  for hidden layers.
 
 #Result:
-![result](result.jpg)
+![result](result.JPG)
