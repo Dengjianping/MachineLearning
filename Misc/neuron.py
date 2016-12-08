@@ -3,15 +3,25 @@ import random
 import unittest
 
 class Neuron:
-    def __init__(self, bias=None):
+    def __init__(self):
         self.input = None
         self.output = None
         self.linearValue = None
-        self.weights = None
-        self.bias = bias
+        self.weights = []
+        
+    # @property
+    # def weights(self):
+        # return self.weights
+        
+    # @weights.setter
+    # def weihgts(self, weights):
+        # if type(weights) != list:
+            # raise TypeError("please assign a list")
+        # self.weights = weights
         
     def linearInput(self):
         t = 0
+        print len(self.input)
         for i in range(len(self.input)):
             t += self.weights[i]*self.input[i]
         return t + self.bias
@@ -40,14 +50,13 @@ class Neuron:
         return self.input[index]
 
 class NeuronLayer:
-    def __init__(self, numHidden, bias=None):
+    def __init__(self, numHidden):
         self.neurons = self.initlayer(numHidden)
-        self.bias = bias
     
     def initlayer(self, numHidden):
         neurons = []
         for i in range(numHidden):
-            neurons.append(Neuron(bias))
+            neurons.append(Neuron())
         return neurons
     
     def feedForward(self, inputs):
@@ -65,37 +74,57 @@ class NeuronLayer:
     def totalError(self, targets):
         t = 0
         for i in range(len(targets)):
-            t += self.neurons.totalError(targets[i])
+            t += self.neurons[i].totalError(targets[i])
         return t
 
 class NeuronNetwork:
-    def __init__(self, numInputs, numHidden, numOutput, learnRate, precision, targets, hiddenLayerBias=None, outputLayerBias=None):
+    def __init__(self, numInputs, inputs, numHidden, numOutput, learnRate, precision, targets):
         self.numInputs = numInputs
+        self.inputs = inputs
         self.learnRate = learnRate
         self.precision = precision
         self.targets = targets
-        self.hiddenLayer = NeuronLayer(numHidden, hiddenLayerBias)
-        self.outputLayer = NeuronLayer(numOutput, outputLayerBias)
+        self.hiddenLayer = NeuronLayer(numHidden)
+        self.outputLayer = NeuronLayer(numOutput)
         # initialize hidden layer weights
         self.initHiddenLayerWeights()
         # initialize output layer weights
         self.initOutputLayerWeights()
     
+    # def __repr__(self):
+        # return 'NeuronNetwork({0.numInputs}, {0.inputs}, {0.numHidden}, {0.numOutput}, {0.learnRate}, {0.precision}, {0.targets})'.format(self)
+        
+    # def __str__(self):
+        # pass
+    
+    # def __enter__(self):
+        # pass
+        
+    # def __exit__(self):
+        # pass
+    
+    # def __format__(self):
+        # pass
+    
     def initHiddenLayerWeights(self):
         for i, neuron in enumerate(self.hiddenLayer.neurons):
+            weights = []
             for j in range(self.numInputs):
-                self.hiddenLayer[i].weights[j] = random.random()
+                weights.append(random.random())
+            self.hiddenLayer.neurons[i].weights = weights
         
     def initOutputLayerWeights(self):
-        for i in range(len(self.outputLayer.neurons):           
-            for j in range(len(self.hiddenLayer.neurons):
-                self.outputLayer.neurons[i].weights[j] = random.random()
+        for i, neuron in enumerate(self.outputLayer.neurons):
+            weights = []
+            for j, neuron in enumerate(self.hiddenLayer.neurons):
+                weights.append(random.random())
+            self.outputLayer.neurons[i].weights = weights
         
-    def feedForward(self, inputs):
-        inputForOutput = self.hiddenLayer.feedForward(inputs)
+    def feedForward(self):
+        inputForOutput = self.hiddenLayer.feedForward(self.inputs)
         return self.outputLayer.feedForward(inputForOutput)
         
-    def backPropagation(self, inputs):
+    def backPropagation(self):
         # update output layer weights
         for i in range(len(self.outputLayer.neurons)):
             for j in range(len(self.outputLayer.neurons[i].weights)):
@@ -109,47 +138,23 @@ class NeuronNetwork:
                 # calculate toal error of derivation
                 for m in range(len(self.outputLayer.neurons)):
                     derivation += self.outputLayer.neurons[m].partitialDerivationOfToalError(self.targets[m]) * self.outputLayer.neurons[m].weights[i]
-                self.hiddenLayer.neurons[i].weights[j] = self.hiddenLayer.neurons[i].weights[j] - self.learnRate * inputs[i] * self.hiddenLayer.neurons[i].partitialDerivationOfSigmoid()
+                self.hiddenLayer.neurons[i].weights[j] = self.hiddenLayer.neurons[i].weights[j] - self.learnRate * self.inputs[i] * self.hiddenLayer.neurons[i].partitialDerivationOfSigmoid()
                         
-    def train(self, inputs):
-        self.feedForward(inputs)
+    def train(self):
+        self.feedForward()
         while (True):
             if (self.outputLayer.totalError(self.targets) <= self.precision):
                 break
-            self.backPropagation(inputs)
-            self.feedForward(inputs)       
-        
-class TestNeuron(unittest.TestCase):
-    def setUp(self):
-        self.neuron = Neuron(0)
-        
-    @unittest.expectedFailure
-    def testSigmoid(self):
-        self.assertEquals(0.78, self.neuron.sigmoid([1,4]))
-        
-    @unittest.skipIf(self.neuron.input==None, "please assign input array to Neuron")
-    def testIndexInput(self):
-        self.neuron.sigmoid([1,4])
-        self.assertEquals(4, self.neuron.indexInput(0))
-        
-    def tearDown(self):
-        self.neuron = None
-
-class TestNeuronLayer(unittest.TestCase):
-    def setUp(self):
-        self.layer = NeuronLayer(2)
-        
-    def tearDown(self):
-        self.layer = None
-class TestNeuronNetwork(unittest.TestCase):
-    def setUp(self):
-        self.network = NeuronNetwork()
-        
-    def tearDown(self):
-        self.network = None
+            self.backPropagation()
+            self.feedForward()
         
 if __name__ == '__main__':
-    neuronSuite = unittest.TestLoader().loadTestsFromTestCase(TestNeuron)
-    layerSuite = unittest.TestLoader().loadTestsFromTestCase(TestNeuronLayer)
-    networkSuite = unittest.TestLoader().loadTestsFromTestCase(TestNeuronNetwork)
-    unittest.TextTestRunner(verbosity=2).run(neuronSuite)
+    numInputs = 2
+    inputs = [2.5, 5,7]
+    numHidden = 2
+    numOutput = 2
+    learnRate = 0.3
+    precision = 1e-4
+    targets = [0.3, 0.6]
+    nn = NeuronNetwork(numInputs, inputs, numHidden, numOutput, learnRate, precision, targets)
+    nn.train()
