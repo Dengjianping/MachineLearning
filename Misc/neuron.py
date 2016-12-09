@@ -19,6 +19,7 @@ class Neuron:
             # raise TypeError("please assign a list")
         # self.weights = weights
         
+        
     def linearInput(self):
         t = 0
         print len(self.input)
