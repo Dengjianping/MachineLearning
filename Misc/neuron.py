@@ -9,23 +9,11 @@ class Neuron:
         self.linearValue = None
         self.weights = []
         
-    # @property
-    # def weights(self):
-        # return self.weights
-        
-    # @weights.setter
-    # def weihgts(self, weights):
-        # if type(weights) != list:
-            # raise TypeError("please assign a list")
-        # self.weights = weights
-        
-        
     def linearInput(self):
         t = 0
-        print len(self.input)
         for i in range(len(self.input)):
             t += self.weights[i]*self.input[i]
-        return t + self.bias
+        return t
         
     def sigmoid(self, input):
         self.input = input
@@ -53,6 +41,7 @@ class Neuron:
 class NeuronLayer:
     def __init__(self, numHidden):
         self.neurons = self.initlayer(numHidden)
+        self.output = []
     
     def initlayer(self, numHidden):
         neurons = []
@@ -64,13 +53,12 @@ class NeuronLayer:
         layerOutput = []
         for neuron in self.neurons:
             layerOutput.append(neuron.sigmoid(inputs))
+        
+        self.output = layerOutput
         return layerOutput
         
-    def getOutput(self):
-        output = []
-        for neuron in self.neurons:
-            output.append(neuron.output)
-        return output
+    def getOutput(self, index):
+        return self.output[index]
         
     def totalError(self, targets):
         t = 0
@@ -92,34 +80,23 @@ class NeuronNetwork:
         # initialize output layer weights
         self.initOutputLayerWeights()
     
-    # def __repr__(self):
-        # return 'NeuronNetwork({0.numInputs}, {0.inputs}, {0.numHidden}, {0.numOutput}, {0.learnRate}, {0.precision}, {0.targets})'.format(self)
-        
-    # def __str__(self):
-        # pass
-    
-    # def __enter__(self):
-        # pass
-        
-    # def __exit__(self):
-        # pass
-    
-    # def __format__(self):
-        # pass
-    
     def initHiddenLayerWeights(self):
+        w = [[0.15, 0.2], [0.25, 0.3]]
         for i, neuron in enumerate(self.hiddenLayer.neurons):
             weights = []
             for j in range(self.numInputs):
                 weights.append(random.random())
-            self.hiddenLayer.neurons[i].weights = weights
+            self.hiddenLayer.neurons[i].weights = w[i]
+            print weights
         
     def initOutputLayerWeights(self):
+        w = [[0.4, 0.45], [0.5, 0.55]]
         for i, neuron in enumerate(self.outputLayer.neurons):
             weights = []
             for j, neuron in enumerate(self.hiddenLayer.neurons):
                 weights.append(random.random())
-            self.outputLayer.neurons[i].weights = weights
+            self.outputLayer.neurons[i].weights = w[i]
+            print weights
         
     def feedForward(self):
         inputForOutput = self.hiddenLayer.feedForward(self.inputs)
@@ -129,8 +106,7 @@ class NeuronNetwork:
         # update output layer weights
         for i in range(len(self.outputLayer.neurons)):
             for j in range(len(self.outputLayer.neurons[i].weights)):
-                self.outputLayer.neurons[i].weights[j] = self.outputLayer.neurons[i].weights[j] - self.learnRate * \
-                    self.outputLayer.neurons[i].partitialDerivationOfToalError(self.targets[i]) * self.hiddenLayer.neurons.getOutput()[j]
+                self.outputLayer.neurons[i].weights[j] -= self.learnRate * self.outputLayer.neurons[i].partitialDerivationOfToalError(self.targets[i]) * self.hiddenLayer.getOutput(j)
                 
         # update hidden layer weights
         for i in range(len(self.hiddenLayer.neurons)):
@@ -139,23 +115,30 @@ class NeuronNetwork:
                 # calculate toal error of derivation
                 for m in range(len(self.outputLayer.neurons)):
                     derivation += self.outputLayer.neurons[m].partitialDerivationOfToalError(self.targets[m]) * self.outputLayer.neurons[m].weights[i]
-                self.hiddenLayer.neurons[i].weights[j] = self.hiddenLayer.neurons[i].weights[j] - self.learnRate * self.inputs[i] * self.hiddenLayer.neurons[i].partitialDerivationOfSigmoid()
+                # print derivation
+                self.hiddenLayer.neurons[i].weights[j] -= self.learnRate * self.inputs[i] * self.hiddenLayer.neurons[i].partitialDerivationOfSigmoid()
                         
     def train(self):
         self.feedForward()
+        print self.outputLayer.output
+        self.backPropagation()
+        i = 0
         while (True):
+            i += 1
+            print i
             if (self.outputLayer.totalError(self.targets) <= self.precision):
                 break
+            print self.outputLayer.totalError(self.targets)
             self.backPropagation()
             self.feedForward()
         
 if __name__ == '__main__':
     numInputs = 2
-    inputs = [2.5, 5,7]
+    inputs = [0.5, 0.1]
     numHidden = 2
     numOutput = 2
     learnRate = 0.3
     precision = 1e-4
-    targets = [0.3, 0.6]
+    targets = [0.1, 0.99]
     nn = NeuronNetwork(numInputs, inputs, numHidden, numOutput, learnRate, precision, targets)
     nn.train()
