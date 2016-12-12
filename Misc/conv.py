@@ -37,7 +37,7 @@ def convArray(kernel, target):
             result[i+j] += k * t
     return result
     
-def convMatrix(kernel, target):
+def convMatrix(kernel, target):   
     result = Matrix(kernel.row+target.row - 1, target.col+kernel.col-1, True)
     for i in range(target.row):
         for j in range(target.col):

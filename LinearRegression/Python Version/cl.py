@@ -23,7 +23,7 @@ class LinearRegression:
         for index, y in enumerate(self.trainY):
             t = self.hypothesis(self.trainX[index]) - self.trainY[index]
             cost += math.pow(t, 2)
-        return 0.5 * len(self.trainY) * cost
+        return 0.5 * cost / len(self.trainY)
         
     def partialDerivation(self, subIndex):
         length = len(self.trainY)
