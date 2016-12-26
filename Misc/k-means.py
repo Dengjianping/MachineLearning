@@ -17,6 +17,24 @@ def calculate_distance(x, y):
         dis += (value - y[index])**2
     return math.sqrt(dis)
 
+def calculate_distance2(data, kmean, label):
+    row, col = data.shape
+
+    for i in range(row):
+        min_value = 0
+        min_index = 0
+        for k in kmean:
+            t = calculate_distance(data[i], data[k])
+            if (i != k):
+                if (min_value == 0):
+                    min_value = t
+                else:
+                    if (min_value > t):
+                        min_value = t
+                        min_value = k
+        label[label.keys()[min_value]].append(min_value)
+    return label
+
 if __name__ == '__main__':
     x0 = [50, 50, 9]
     x1 = [28, 9, 4]
@@ -33,12 +51,12 @@ if __name__ == '__main__':
     x12 = [40, 40, 9]
     x13 = [40, 32, 17]
     x14 = [50, 50, 9]
-    conutry = ["china", "japan", "krea", "iran", "sadi", "iraq", "qatar", "uae", "uzb", "thailand", "vietnam", "amen", "bahrain", "north krea", "india"]
-
+    # conutry = ["china", "japan", "krea", "iran", "sadi", "iraq", "qatar", "uae", "uzb", "thailand", "vietnam", "amen", "bahrain", "north krea", "india"]
 
     data = np.array([x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14])
     data = norm_data(data)
-    label = [1, 9, 12]
-    print(calculate_distance(data[12], data[1]))
-    print(calculate_distance(data[0], data[9]))
-    print(calculate_distance(data[0], data[12]))
+    label = {"A": [], "B": [], "C": []}
+    kmean = [1, 9, 12]
+    print(list(label.keys()))
+    # l = calculate_distance2(data, kmean, label)
+    # print(l)
